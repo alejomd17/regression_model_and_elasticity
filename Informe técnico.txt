@@ -1,0 +1,26 @@
+INFORME TÉCNICO - MODELO DE REGRESIÓN Y ELASTICIDADES
+
+1. Explicación del modelo:
+El modelo implementado es una regresión lineal múltiple que predice la cantidad vendida (quantity_sold) en función del precio del producto (price) y el precio del competidor (competitor_price). Este modelo nos permite entender cómo afectan estas variables a las ventas.
+
+2. Cálculo de elasticidad:
+La elasticidad precio de la demanda se calcula como:
+Elasticidad = (Coeficiente de precio) * (Precio promedio / Cantidad promedio vendida)
+
+Una elasticidad mayor que 1 (en valor absoluto) indica demanda elástica (las ventas son sensibles a cambios de precio), mientras que una menor que 1 indica demanda inelástica.
+
+3. Resultados:
+- R²: 0.1738
+- Coeficiente de price: -0.3816
+- Elasticidad precio: -0.6734 (inelástica)
+
+4. Instrucciones de ejecución:
+1. Construir y ejecutar los contenedores:
+   docker-compose up --build -d
+
+2. Ejecutar el script de procesamiento:
+   docker-compose exec app python /app/src/main.py
+
+3. Verificar resultados en DBeaver:
+   - Conectar a PostgreSQL (host: localhost, puerto: 5432, db: soho_db, user: user, password: password)
+   - Ejecutar consulta: SELECT * FROM results;
