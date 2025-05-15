@@ -4,7 +4,6 @@ from sklearn.metrics import r2_score
 from sqlalchemy import create_engine, Table, Column, Float, MetaData
 import os
 
-
 def data_process():
     # 1. Procesamiento de datos
     df = pd.read_csv('./data/sales_data.csv')
@@ -25,7 +24,7 @@ def linear_regression(df,x_list,y_col):
     price_coef = model.coef_[0]
     return model, y_pred, r_squared, price_coef
 
-def elasticity(df, price_coef, col_name_price, col_name_demand):
+def calculate_elasticity(df, price_coef, col_name_price, col_name_demand):
     # 3. Cálculo de elasticidad
     # Para calcular la elasticidad precio de la demanda con una regresión lineal, 
     # se necesita la pendiente de la regresión lineal y 
@@ -44,11 +43,23 @@ def elasticity(df, price_coef, col_name_price, col_name_demand):
     print(f"Coeficiente de precio: {price_coef:.4f}")
     print(f"Elasticidad precio: {elasticity:.4f} ({elasticity_type})")
 
-def postgresql_storage(r_squared, price_coef):
+    return elasticity
+
+def postgresql_storage(r_squared, price_coef, elasticity):
     # 4. Almacenamiento en PostgreSQL
-    db_url = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_HOST')}/{os.getenv('DB_NAME')}"
+    db_config = {
+        'host': os.environ.get('DB_HOST', 'db'),  # Valor por defecto 'db' para Docker
+        'database': os.environ.get('DB_NAME', 'soho_db'),
+        'user': os.environ.get('DB_USER', 'user'),
+        'password': os.environ.get('DB_PASS', 'password')
+    }
+    print("\nConfiguración DB desde Docker:")
+    print(f"Host: {db_config['host']}")
+    print(f"DB: {db_config['database']}")
+    print(f"User: {db_config['user']}")
+    db_url = f"postgresql://{db_config['user']}:{db_config['password']}@{db_config['host']}/{db_config['database']}"
+    print(db_url)
     engine = create_engine(db_url)
-    
     # Crear tabla si no existe
     metadata = MetaData()
     results_table = Table('results', metadata,
@@ -65,7 +76,7 @@ def postgresql_storage(r_squared, price_coef):
             price_coefficient=price_coef,
             price_elasticity=elasticity
         ))
-        conn.commit()
+        # conn.commit()   
 
 def main():
     df = data_process()
@@ -73,7 +84,7 @@ def main():
                                                  ['price', 'competitor_price'],
                                                  'quantity_sold')
    
-    elasticity_type = elasticity(df, price_coef, 'price', 'quantity_sold')
-
+    elasticity = calculate_elasticity(df, price_coef, 'price', 'quantity_sold')
+    postgresql_storage(r_squared, price_coef, elasticity)
 if __name__ == "__main__":
     main()
